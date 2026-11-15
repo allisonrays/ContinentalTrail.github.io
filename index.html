@@ -269,7 +269,7 @@
         date: '10.23 6:11 pm'
       },
       {
-        x: 300, y: 160,
+        x: 230, y: 220,
         emoji: '⛰️',
         photo: 'photos/img4.jpeg',
         caption: 'The Black Hills came into view. The trail grows harder here. Two families turned back today. We pressed on.',
@@ -283,7 +283,7 @@
         date: '10.24 12:21 pm'
       },
       {
-        x: 530, y: 275,
+        x: 530, y: 175,
         emoji: '🏔️',
         photo: 'photos/img6.jpeg',
         caption: 'South Pass. The highest point on the trail — yet it felt like any other meadow, wide and gentle. The wind was fierce and unrelenting.',
@@ -426,7 +426,7 @@
       const dx = player.x - cp.x;
       const dy = player.y - cp.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 32) {
+      if (dist < 16) {
         phase = 'capture';
         triggerCapture();
       }
@@ -552,7 +552,7 @@
 
       current = 0;
       phase   = 'explore';
-      player  = { x: 60, y: 500, size: 16 };
+      player  = { x: 160, y: 520, size: 12 };
 
       document.getElementById('journal-panel').style.display  = 'none';
       document.getElementById('continue-btn').style.display   = 'none';
