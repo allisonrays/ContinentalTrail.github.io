@@ -200,7 +200,7 @@
 </head>
 <body>
 
-  <h1>Oregon Trail</h1>
+  <h1>Continental Divide Trail</h1>
 
   <div id="progress-bar"></div>
 
@@ -217,6 +217,7 @@
   <!-- Journal appears after each capture -->
   <div id="journal-panel">
     <div id="photo-frame">
+      <img src="photos/img1.jpeg" style="width:100%;height:100%;object-fit:cover;">
       <!--
         SWAP THIS OUT:
         Replace the emoji span below with an <img> tag pointing to your photo.
@@ -317,7 +318,8 @@
     //  GAME ENGINE — you don't need to edit below here
     //  unless you want to change how things work
     // ════════════════════════════════════════════════════
-
+    const playerSprite = new Image();
+    playerSprite.src = 'photos/backpack.png';
     const bgCanvas   = document.getElementById('bg-canvas');
     const gameCanvas = document.getElementById('game-canvas');
     const bgCtx      = bgCanvas.getContext('2d');
@@ -422,12 +424,9 @@
       }
 
       // ── Player icon ──
-      // Replace this emoji with:
-      //   ctx.drawImage(playerSprite, player.x - 16, player.y - 24, 32, 40);
-      ctx.font = `${player.size * 2.2}px serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🤠', player.x, player.y);
+      if (playerSprite.complete) {
+        ctx.drawImage(playerSprite, player.x - 20, player.y - 24, 40, 48);
+}
     }
 
     // ── Movement ──
