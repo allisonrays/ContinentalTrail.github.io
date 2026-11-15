@@ -218,11 +218,6 @@
   <div id="journal-panel">
     <div id="photo-frame">
       <img src="photos/img1.jpeg" style="width:100%;height:100%;object-fit:cover;">
-      <!--
-        SWAP THIS OUT:
-        Replace the emoji span below with an <img> tag pointing to your photo.
-        Example: <img src="photos/checkpoint1.jpg" style="width:100%;height:100%;object-fit:cover;">
-      -->
       <span id="photo-placeholder">📸</span>
     </div>
     <div id="journal-book">
@@ -236,8 +231,8 @@
   <button id="continue-btn" onclick="nextCheckpoint()">Continue →</button>
 
   <div id="end-screen">
-    <h2>Journey complete</h2>
-    <p>You have reached your destination. The trail is behind you now.</p>
+    <h2>Journey complete!</h2>
+    <p>The October 2026 Hiking Trip is done! Thanks for recapping the journey</p>
     <button id="restart-btn" onclick="startGame()">Play again</button>
   </div>
 
@@ -357,28 +352,16 @@
     // ── Background drawing ──
     // This is a placeholder sky + ground.
     // Replace with: bgCtx.drawImage(yourBgImage, 0, 0, W, H);
+    const bgImage = new Image();
+    bgImage.src = 'photos/background.jpg';
+
     function drawBackground() {
       bgCtx.clearRect(0, 0, W, H);
-
-      // Sky
-      bgCtx.fillStyle = '#c9dff5';
-      bgCtx.fillRect(0, 0, W, H * 0.5);
-
-      // Ground
-      bgCtx.fillStyle = '#b5a97a';
-      bgCtx.fillRect(0, H * 0.5, W, H * 0.5);
-
-      // Horizon
-      bgCtx.fillStyle = '#8a7d55';
-      bgCtx.fillRect(0, H * 0.49, W, 5);
-
-      // ── Draw trail path between completed checkpoints ──
-      if (current > 0) {
-        ctx.save();
-        // Draw a dashed line connecting completed stops
-        // (optional visual — you can remove this if you prefer a clean map)
+      if (bgImage.complete) {
+        bgCtx.drawImage(bgImage, 0, 0, W, H);
       }
     }
+    
 
     // ── Main game canvas drawing ──
     function drawGame() {
