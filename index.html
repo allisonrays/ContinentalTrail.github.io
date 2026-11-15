@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oregon Trail</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a0e06;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: Georgia, serif;
+      color: #f0e6cc;
+    }
+
+    h1 {
+      font-size: 28px;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+      color: #f0d08a;
+      text-transform: uppercase;
+    }
+
+    #progress-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4a3520;
+      border: 1.5px solid #8a6a40;
+      transition: background 0.4s;
+    }
+
+    .dot.done { background: #c8922a; }
+    .dot.active { background: #f0d08a; border-color: #f0d08a; }
+
+    #game-wrap {
+      position: relative;
+      width: 560px;
+      height: 560px;
+      border: 3px solid #6a4a20;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: none;
+    }
+
+    #bg-canvas {
+      position: absolute;
+      top: 0; left: 0;
+    }
+
+    #game-canvas {
+      position: absolute;
+      top: 0; left: 0;
+    }
+
+    #flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s;
+    }
+
+    #hud {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #c8a870;
+      letter-spacing: 1px;
+      height: 20px;
+      text-align: center;
+    }
+
+    /* ── Journal panel ── */
+    #journal-panel {
+      display: none;
+      flex-direction: row;
+      gap: 20px;
+      margin-top: 18px;
+      width: 560px;
+    }
+
+    #photo-frame {
+      width: 200px;
+      height: 150px;
+      flex-shrink: 0;
+      border: 3px solid #8a6a40;
+      border-radius: 2px;
+      background: #2c1a0e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── swap this for <img> when you have real photos ── */
+    #photo-placeholder {
+      font-size: 64px;
+    }
+
+    #journal-book {
+      flex: 1;
+      background: #f5edda;
+      border-radius: 2px;
+      border: 2px solid #8a6a40;
+      padding: 14px 18px;
+      position: relative;
+    }
+
+    #journal-book::before {
+      content: '';
+      position: absolute;
+      left: 28px;
+      top: 0; bottom: 0;
+      width: 1.5px;
+      background: #e0c8a0;
+    }
+
+    #journal-date {
+      font-size: 11px;
+      color: #8a6a40;
+      margin-bottom: 8px;
+      padding-left: 24px;
+    }
+
+    #journal-text {
+      font-size: 15px;
+      color: #2c1a0e;
+      line-height: 1.7;
+      padding-left: 24px;
+      min-height: 80px;
+    }
+
+    #cursor-blink {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: #2c1a0e;
+      vertical-align: -2px;
+      animation: blink 0.7s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    #continue-btn {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 28px;
+      background: #2c1a0e;
+      color: #f0d08a;
+      border: 2px solid #8a6a40;
+      font-family: Georgia, serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    #continue-btn:hover { background: #4a2e10; }
+
+    #end-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    #end-screen h2 { color: #f0d08a; font-size: 22px; letter-spacing: 2px; }
+    #end-screen p  { color: #c8a870; font-size: 15px; max-width: 400px; line-height: 1.6; }
+
+    #restart-btn {
+      padding: 10px 28px;
+      background: #2c1a0e;
+      color: #f0d08a;
+      border: 2px solid #8a6a40;
+      font-family: Georgia, serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    #restart-btn:hover { background: #4a2e10; }
+  </style>
+</head>
+<body>
+
+  <h1>Oregon Trail</h1>
+
+  <div id="progress-bar"></div>
+
+  <div id="game-wrap">
+    <!-- Layer 1: your background art -->
+    <canvas id="bg-canvas" width="560" height="560"></canvas>
+    <!-- Layer 2: game objects (player + checkpoint circle) -->
+    <canvas id="game-canvas" width="560" height="560"></canvas>
+    <div id="flash-overlay"></div>
+  </div>
+
+  <div id="hud">Move toward the circle with the arrow keys</div>
+
+  <!-- Journal appears after each capture -->
+  <div id="journal-panel">
+    <div id="photo-frame">
+      <!--
+        SWAP THIS OUT:
+        Replace the emoji span below with an <img> tag pointing to your photo.
+        Example: <img src="photos/checkpoint1.jpg" style="width:100%;height:100%;object-fit:cover;">
+      -->
+      <span id="photo-placeholder">📸</span>
+    </div>
+    <div id="journal-book">
+      <div id="journal-date"></div>
+      <div id="journal-text">
+        <span id="typed-text"></span><span id="cursor-blink"></span>
+      </div>
+    </div>
+  </div>
+
+  <button id="continue-btn" onclick="nextCheckpoint()">Continue →</button>
+
+  <div id="end-screen">
+    <h2>Journey complete</h2>
+    <p>You have reached your destination. The trail is behind you now.</p>
+    <button id="restart-btn" onclick="startGame()">Play again</button>
+  </div>
+
+
+  <script>
+    // ════════════════════════════════════════════════════
+    //  EDIT THIS SECTION — your 8 checkpoints
+    //  x and y are positions on the 560×560 map (0–560)
+    //  emoji is a placeholder until you add real photos
+    //  photo: 'photos/checkpoint1.jpg'  ← your real image path
+    //  caption: the journal text that types out
+    //  date: shown at the top of the journal entry
+    // ════════════════════════════════════════════════════
+    const CHECKPOINTS = [
+      {
+        x: 100, y: 480,
+        emoji: '🌾',
+        photo: null,            // replace with 'photos/stop1.jpg'
+        caption: 'We set out from Independence at first light. The prairie stretched endlessly before us, golden in the morning sun. The oxen moved steadily, unbothered by the weight.',
+        date: 'April 3, 1848'
+      },
+      {
+        x: 200, y: 380,
+        emoji: '🦬',
+        photo: null,
+        caption: 'A great herd of bison crossed our path near the Platte River. We counted perhaps two thousand strong. The earth trembled beneath their hooves.',
+        date: 'April 18, 1848'
+      },
+      {
+        x: 300, y: 300,
+        emoji: '💧',
+        photo: null,
+        caption: 'We found Chimney Rock rising impossibly from the flat earth — a landmark every traveler speaks of. We rested the animals here and refilled our water.',
+        date: 'May 2, 1848'
+      },
+      {
+        x: 420, y: 280,
+        emoji: '⛰️',
+        photo: null,
+        caption: 'The Black Hills came into view. The trail grows harder here. Two families turned back today. We pressed on.',
+        date: 'May 14, 1848'
+      },
+      {
+        x: 460, y: 180,
+        emoji: '🌊',
+        photo: null,
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: 'May 29, 1848'
+      },
+      {
+        x: 380, y: 100,
+        emoji: '🏔️',
+        photo: null,
+        caption: 'South Pass. The highest point on the trail — yet it felt like any other meadow, wide and gentle. The wind was fierce and unrelenting.',
+        date: 'June 10, 1848'
+      },
+      {
+        x: 240, y: 80,
+        emoji: '🌲',
+        photo: null,
+        caption: 'The great forests of the Blue Mountains stopped us cold. We spent three days cutting a path wide enough for the wagons. The trees were ancient beyond reckoning.',
+        date: 'August 4, 1848'
+      },
+      {
+        x: 100, y: 100,
+        emoji: '🏡',
+        photo: null,
+        caption: 'Oregon City. We have arrived. The valley is everything they promised — green and wide and full of promise. We will build our home here, on this hill.',
+        date: 'September 1, 1848'
+      }
+    ];
+
+    // ════════════════════════════════════════════════════
+    //  DATES — journal dates for each entry
+    // ════════════════════════════════════════════════════
+
+    // ════════════════════════════════════════════════════
+    //  GAME ENGINE — you don't need to edit below here
+    //  unless you want to change how things work
+    // ════════════════════════════════════════════════════
+
+    const bgCanvas   = document.getElementById('bg-canvas');
+    const gameCanvas = document.getElementById('game-canvas');
+    const bgCtx      = bgCanvas.getContext('2d');
+    const ctx        = gameCanvas.getContext('2d');
+    const W = 560, H = 560;
+
+    let player    = { x: 60, y: 500, size: 16 };
+    let keys      = {};
+    let phase     = 'explore';    // explore | capture | journal
+    let current   = 0;            // which checkpoint we're heading to
+    let animFrame;
+    let typeTimer;
+
+    // ── Progress dots ──
+    function buildDots() {
+      const bar = document.getElementById('progress-bar');
+      bar.innerHTML = '';
+      CHECKPOINTS.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.id = `dot-${i}`;
+        bar.appendChild(d);
+      });
+    }
+
+    function updateDots() {
+      CHECKPOINTS.forEach((_, i) => {
+        const d = document.getElementById(`dot-${i}`);
+        if (i < current)        d.className = 'dot done';
+        else if (i === current) d.className = 'dot active';
+        else                    d.className = 'dot';
+      });
+    }
+
+    // ── Background drawing ──
+    // This is a placeholder sky + ground.
+    // Replace with: bgCtx.drawImage(yourBgImage, 0, 0, W, H);
+    function drawBackground() {
+      bgCtx.clearRect(0, 0, W, H);
+
+      // Sky
+      bgCtx.fillStyle = '#c9dff5';
+      bgCtx.fillRect(0, 0, W, H * 0.5);
+
+      // Ground
+      bgCtx.fillStyle = '#b5a97a';
+      bgCtx.fillRect(0, H * 0.5, W, H * 0.5);
+
+      // Horizon
+      bgCtx.fillStyle = '#8a7d55';
+      bgCtx.fillRect(0, H * 0.49, W, 5);
+
+      // ── Draw trail path between completed checkpoints ──
+      if (current > 0) {
+        ctx.save();
+        // Draw a dashed line connecting completed stops
+        // (optional visual — you can remove this if you prefer a clean map)
+      }
+    }
+
+    // ── Main game canvas drawing ──
+    function drawGame() {
+      ctx.clearRect(0, 0, W, H);
+
+      if (phase === 'explore') {
+        const cp = CHECKPOINTS[current];
+        // Pulsing target circle
+        const scale = 0.88 + 0.12 * Math.sin(Date.now() / 300);
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 26 * scale, 0, Math.PI * 2);
+        ctx.strokeStyle = '#e07020';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([7, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Center dot
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#e07020';
+        ctx.fill();
+
+        // Checkpoint number badge
+        ctx.font = 'bold 13px Georgia';
+        ctx.fillStyle = '#e07020';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${current + 1}`, cp.x, cp.y - 34);
+      }
+
+      // Draw completed checkpoint markers
+      for (let i = 0; i < current; i++) {
+        const cp = CHECKPOINTS[i];
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#c8922a';
+        ctx.fill();
+        ctx.font = 'bold 10px Georgia';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${i + 1}`, cp.x, cp.y);
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      // ── Player icon ──
+      // Replace this emoji with:
+      //   ctx.drawImage(playerSprite, player.x - 16, player.y - 24, 32, 40);
+      ctx.font = `${player.size * 2.2}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🤠', player.x, player.y);
+    }
+
+    // ── Movement ──
+    function movePlayer() {
+      if (phase !== 'explore') return;
+      const speed = 3;
+      if (keys['ArrowLeft'])  player.x = Math.max(player.size, player.x - speed);
+      if (keys['ArrowRight']) player.x = Math.min(W - player.size, player.x + speed);
+      if (keys['ArrowUp'])    player.y = Math.max(player.size, player.y - speed);
+      if (keys['ArrowDown'])  player.y = Math.min(H - player.size, player.y + speed);
+
+      // Check if player reached the current checkpoint
+      const cp = CHECKPOINTS[current];
+      const dx = player.x - cp.x;
+      const dy = player.y - cp.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 32) {
+        phase = 'capture';
+        triggerCapture();
+      }
+    }
+
+    // ── Camera capture ──
+    function triggerCapture() {
+      document.getElementById('hud').textContent = '';
+
+      // Camera click sound
+      try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = ac.createBuffer(1, ac.sampleRate * 0.15, ac.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * 0.025));
+        }
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+        const filter = ac.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 2000;
+        src.connect(filter);
+        filter.connect(ac.destination);
+        src.start();
+      } catch(e) {}
+
+      // White flash
+      const flash = document.getElementById('flash-overlay');
+      flash.style.transition = 'none';
+      flash.style.opacity = '1';
+      setTimeout(() => {
+        flash.style.transition = 'opacity 0.4s';
+        flash.style.opacity = '0';
+      }, 60);
+
+      // Show journal after flash settles
+      setTimeout(() => {
+        showJournal(current);
+        cancelAnimationFrame(animFrame);
+        drawGame();
+      }, 500);
+    }
+
+    // ── Journal display ──
+    function showJournal(index) {
+      const cp = CHECKPOINTS[index];
+      phase = 'journal';
+
+      // Show the photo frame
+      const photoPlaceholder = document.getElementById('photo-placeholder');
+      const photoFrame = document.getElementById('photo-frame');
+
+      if (cp.photo) {
+        // Real photo — replace the emoji with an img
+        photoFrame.innerHTML = `<img src="${cp.photo}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        // Placeholder emoji
+        photoFrame.innerHTML = `<span id="photo-placeholder" style="font-size:64px">${cp.emoji}</span>`;
+      }
+
+      document.getElementById('journal-date').textContent = cp.date;
+      document.getElementById('typed-text').textContent = '';
+      document.getElementById('cursor-blink').style.display = 'inline-block';
+      document.getElementById('journal-panel').style.display = 'flex';
+      document.getElementById('continue-btn').style.display = 'none';
+
+      typeCaption(cp.caption, () => {
+        document.getElementById('cursor-blink').style.display = 'none';
+        document.getElementById('continue-btn').style.display = 'inline-block';
+        document.getElementById('continue-btn').textContent =
+          index === CHECKPOINTS.length - 1 ? 'Finish journey' : 'Continue →';
+      });
+    }
+
+    function typeCaption(text, onDone) {
+      clearTimeout(typeTimer);
+      const el = document.getElementById('typed-text');
+      let i = 0;
+      function tick() {
+        if (i <= text.length) {
+          el.textContent = text.slice(0, i);
+          i++;
+          typeTimer = setTimeout(tick, 28);
+        } else {
+          onDone && onDone();
+        }
+      }
+      tick();
+    }
+
+    // ── After reading journal, move to next checkpoint ──
+    function nextCheckpoint() {
+      current++;
+      document.getElementById('journal-panel').style.display = 'none';
+      document.getElementById('continue-btn').style.display = 'none';
+
+      if (current >= CHECKPOINTS.length) {
+        // All done!
+        document.getElementById('game-wrap').style.display = 'none';
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'flex';
+        return;
+      }
+
+      phase = 'explore';
+      updateDots();
+      document.getElementById('hud').textContent = `Checkpoint ${current + 1} of ${CHECKPOINTS.length} — keep moving!`;
+      loop();
+    }
+
+    // ── Main loop ──
+    function loop() {
+      movePlayer();
+      drawGame();
+      animFrame = requestAnimationFrame(loop);
+    }
+
+    // ── Start / restart ──
+    function startGame() {
+      clearTimeout(typeTimer);
+      cancelAnimationFrame(animFrame);
+
+      current = 0;
+      phase   = 'explore';
+      player  = { x: 60, y: 500, size: 16 };
+
+      document.getElementById('journal-panel').style.display  = 'none';
+      document.getElementById('continue-btn').style.display   = 'none';
+      document.getElementById('end-screen').style.display     = 'none';
+      document.getElementById('game-wrap').style.display      = 'block';
+      document.getElementById('hud').style.display            = 'block';
+      document.getElementById('hud').textContent = 'Move toward the circle with the arrow keys';
+
+      buildDots();
+      updateDots();
+      drawBackground();
+      loop();
+    }
+
+    // ── Keyboard input ──
+    document.addEventListener('keydown', e => {
+      keys[e.key] = true;
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+    document.addEventListener('keyup', e => {
+      keys[e.key] = false;
+    });
+
+    // ── Kick it off ──
+    startGame();
+  </script>
+</body>
+</html>
