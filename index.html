@@ -46,8 +46,8 @@
 
     #game-wrap {
       position: relative;
-      width: 560px;
-      height: 560px;
+      width: 682px;
+      height: 682px;
       border: 3px solid #6a4a20;
       border-radius: 4px;
       overflow: hidden;
@@ -88,7 +88,7 @@
       flex-direction: row;
       gap: 20px;
       margin-top: 18px;
-      width: 560px;
+      width: 682px;
     }
 
     #photo-frame {
@@ -206,9 +206,9 @@
 
   <div id="game-wrap">
     <!-- Layer 1: your background art -->
-    <canvas id="bg-canvas" width="560" height="560"></canvas>
+    <canvas id="bg-canvas" width="682" height="682"></canvas>
     <!-- Layer 2: game objects (player + checkpoint circle) -->
-    <canvas id="game-canvas" width="560" height="560"></canvas>
+    <canvas id="game-canvas" width="682" height="682"></canvas>
     <div id="flash-overlay"></div>
   </div>
 
@@ -248,66 +248,90 @@
     // ════════════════════════════════════════════════════
     const CHECKPOINTS = [
       {
-        x: 175, y: 380,
+        x: 215, y: 466,
         emoji: '🌾',
         photo: 'photos/img1.jpeg',            // replace with 'photos/stop1.jpg'
         caption: 'We set out from Independence at first light. The prairie stretched endlessly before us, golden in the morning sun. The oxen moved steadily, unbothered by the weight.',
         date: '10.23 3:18pm'
       },
       {
-        x: 250, y: 240,
+        x: 306, y: 287,
         emoji: '🦬',
         photo: 'photos/img2.jpeg',
         caption: 'A great herd of bison crossed our path near the Platte River. We counted perhaps two thousand strong. The earth trembled beneath their hooves.',
         date: '10.23 4:32 pm'
       },
       {
-        x: 270, y: 220,
+        x: 285, y: 280,
         emoji: '💧',
         photo: 'photos/img3.jpeg',
         caption: 'We found Chimney Rock rising impossibly from the flat earth — a landmark every traveler speaks of. We rested the animals here and refilled our water.',
         date: '10.23 6:11 pm'
       },
       {
-        x: 230, y: 220,
+        x: 325, y: 277,
         emoji: '⛰️',
         photo: 'photos/img4.jpeg',
         caption: 'The Black Hills came into view. The trail grows harder here. Two families turned back today. We pressed on.',
         date: '10.23 7:58pm'
       },
       {
-        x: 400, y: 150,
+        x: 485, y: 181,
         emoji: '🌊',
         photo: 'photos/img5.jpeg',
         caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
         date: '10.24 12:21 pm'
       },
       {
-        x: 530, y: 175,
+        x: 587, y: 185,
+        emoji: '🌊',
+        photo: 'photos/hike.jpeg',
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: '10.24 1:12 pm'
+      },
+      {
+        x: 676, y: 207,
+        emoji: '🌊',
+        photo: 'photos/cow.jpeg',
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: '10.24 2:28 pm'
+      },
+      {
+        x: 535, y: 169,
+        emoji: '🌊',
+        photo: 'photos/oregoncore.jpeg',
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: '10.24 3:17 pm'
+      },
+      {
+        x: 360, y: 283,
         emoji: '🏔️',
         photo: 'photos/img6.jpeg',
         caption: 'South Pass. The highest point on the trail — yet it felt like any other meadow, wide and gentle. The wind was fierce and unrelenting.',
         date: '10.24 4:04 pm'
       },
       {
-        x: 270, y: 250,
-        emoji: '🌲',
-        photo: 'photos/img7.jpeg',
-        caption: 'The great forests of the Blue Mountains stopped us cold. We spent three days cutting a path wide enough for the wagons. The trees were ancient beyond reckoning.',
-        date: '10.24 5:30 pm'
-      },
-      {
-        x: 175, y: 280,
+        x: 309, y: 284,
         emoji: '🏡',
         photo: 'photos/img8.jpeg',
         caption: 'Oregon City. We have arrived. The valley is everything they promised — green and wide and full of promise. We will build our home here, on this hill.',
         date: '10.24 5:30 pm'
+      },
+      {
+        x: 222, y: 420,
+        emoji: '🌊',
+        photo: 'photos/NightRiver.jpeg',
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: '10.24 6:39 pm'
+      },
+      {
+        x: 211, y: 577,
+        emoji: '🌊',
+        photo: 'photos/cdtsign.jpeg',
+        caption: 'Crossing the Sweetwater River cost us a wagon wheel and most of a day. The water was cold as ice even in May. We lost two sacks of flour.',
+        date: '10.24 7:45 pm'
       }
     ];
-
-    // ════════════════════════════════════════════════════
-    //  DATES — journal dates for each entry
-    // ════════════════════════════════════════════════════
 
     // ════════════════════════════════════════════════════
     //  GAME ENGINE — you don't need to edit below here
@@ -319,7 +343,7 @@
     const gameCanvas = document.getElementById('game-canvas');
     const bgCtx      = bgCanvas.getContext('2d');
     const ctx        = gameCanvas.getContext('2d');
-    const W = 560, H = 560;
+    const W = 682, H = 682;
 
     let player    = { x: 150, y: 530, size: 16 };
     let keys      = {};
