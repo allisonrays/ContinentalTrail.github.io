@@ -345,7 +345,7 @@
     const ctx        = gameCanvas.getContext('2d');
     const W = 682, H = 682;
 
-    let player    = { x: 200, y: 670, size: 16 };
+    let player    = { x: 210, y: 660, size: 16 };
     let keys      = {};
     let phase     = 'explore';    // explore | capture | journal
     let current   = 0;            // which checkpoint we're heading to
@@ -576,7 +576,7 @@
 
       current = 0;
       phase   = 'explore';
-      player  = { x: 200, y: 670, size: 12 };
+      player  = { x: 210, y: 660, size: 12 };
 
       document.getElementById('journal-panel').style.display  = 'none';
       document.getElementById('continue-btn').style.display   = 'none';
